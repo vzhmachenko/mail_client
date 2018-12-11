@@ -19,7 +19,7 @@ IMAP::IMAP(const std::string &host, int port){
      ds
      for (int i = 0; i <  dsfdfs; ++i)
      {
-         /* code */
+         /* cooooooooooode */
      }
 
 
