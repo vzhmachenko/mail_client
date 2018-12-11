@@ -13,14 +13,15 @@
 //-------------IMAP---CLASS-------------------------------------
 //--------------------------------------------------------------
 IMAP::IMAP(const std::string &host, int port){
-    std::tuple<bool, std::strinsdafj 
-    fadsf ala
-    dsf d
-     ds
-     for (int i = 0; i <  dsfdfs; ++i)
-     {
-         /* cooooooooooode */
-     }
+    std::tuple<bool, std::string> sock = 
+                socket.create(host, port);
+    if(!std::get<0>(sock)) 
+        std::cout<<std::get<1>(sock)<<std::endl;
+
+    std::tuple<bool, std::string> ssl = socket.createSSL();
+    if (!std::get<0>(ssl))
+        std::cout<<std::get<1>(ssl) << std::endl;
+}
 
 
 //--------------------------------------------------------------
@@ -129,5 +130,93 @@ int main(int argc, char *argv[]){
                     "VZM"};
     IMAP imap(authent.imap_server, authent.imap_port);
     
+
+/*
+	BIO *bio;
+	SSL *ssl;
+	SSL_CTX *ctx;
+    
+
+	int p;
+
+	char r_buf[1024];
+
+	// Set up the library
+	ERR_load_BIO_strings();
+
+	//SSL_library_init()  -- load encryption & hash algorithms
+	SSL_load_error_strings();	//load error strings for error reporting
+	OpenSSL_add_all_algorithms();
+	
+	// Set up the SSL context
+	//method = SSLv23_client_method()
+	ctx = SSL_CTX_new(SSLv23_client_method());
+	if(!SSL_CTX_load_verify_locations(ctx, 
+				"/etc/ssl/certs/ca-certificates.crt", NULL)){
+		fprintf(stderr, "Error loading trust store\n");
+		ERR_print_errors_fp(stderr);
+		SSL_CTX_free(ctx);
+		return 0;
+	}
+	// Setup the connection
+	bio = BIO_new_ssl_connect(ctx);
+    std::cout<<"Hello";
+	// Set the mode flag
+	BIO_get_ssl(bio, &ssl);	//error
+	SSL_set_mode(ssl, SSL_MODE_AUTO_RETRY);
+
+	// Create and setup connection
+	BIO_set_conn_hostname(bio, "imap.ukr.net:993");
+	//BIO_set_conn_hostname(bio, "gordonua.com:https");
+	if(BIO_do_connect(bio) <= 0){
+		fprintf(stderr, "Error attempting to connect\n");
+		ERR_print_errors_fp(stderr);
+		BIO_free_all(bio);
+		SSL_CTX_free(ctx);
+		return 0;
+	}
+
+	// Check the certificate
+	if(SSL_get_verify_result(ssl) != X509_V_OK){
+		fprintf(stderr, "Certificate verification error: %i\n", 
+			SSL_get_verify_result(ssl) );
+		BIO_free_all(bio);
+		SSL_CTX_free(ctx);
+		return 0;
+	}
+
+	// Read the response
+	char w_buf[1024];
+
+	while(1){
+		p = BIO_read(bio, r_buf, 1023);
+		printf("**********************\n");
+		printf("*Message size = %d*\n", p);
+		printf("**********************\n");
+
+		if(p <= 0) 
+			break;
+		r_buf[p] = '\0';
+		printf("%s", r_buf);
+		printf("q-exit>> ");
+        std::cin.getline(w_buf, 1023);
+		if(w_buf[0] == 'q')
+			break;
+		else{
+			int len = strlen(w_buf);
+			w_buf[len + 0] = '\r';
+			w_buf[len + 1] = '\n';
+			w_buf[len + 2] = '\0';
+			p = BIO_write(bio, w_buf, strlen(w_buf));
+			printf("==============================\n");
+		}
+
+
+	}
+
+	printf("All is OK!");
+	// Close the connection and free the context
+	BIO_free_all(bio);
+	SSL_CTX_free(ctx);*/
 	return 0;
 }
