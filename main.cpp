@@ -13,15 +13,14 @@
 //-------------IMAP---CLASS-------------------------------------
 //--------------------------------------------------------------
 IMAP::IMAP(const std::string &host, int port){
-    std::tuple<bool, std::string> sock = 
-                socket.create(host, port);
-    if(!std::get<0>(sock)) 
-        std::cout<<std::get<1>(sock)<<std::endl;
-
-    std::tuple<bool, std::string> ssl = socket.createSSL();
-    if (!std::get<0>(ssl))
-        std::cout<<std::get<1>(ssl) << std::endl;
-}
+    std::tuple<bool, std::strinsdafj 
+    fadsf ala
+    dsf d
+     ds
+     for (int i = 0; i <  dsfdfs; ++i)
+     {
+         /* code */
+     }
 
 
 //--------------------------------------------------------------
