@@ -25,7 +25,16 @@ IMAP::IMAP(const std::string &host, int port){
         std::cout<<std::get<1>(ssl) << std::endl;
 }
 
+bool IMAP::login(const std::string &username, 
+                const std::string &password){
+    std::string command = ". login " + username + " " + password +
+    "\r\n"; 
+    socket.send(command);
+    
 
+
+
+}
 //--------------------------------------------------------------
 //-------------SOCKET---CLASS-----------------------------------
 //--------------------------------------------------------------
@@ -106,6 +115,26 @@ std::tuple<bool, std::string> Socket::createSSL(){
 
   return std::make_tuple(true, "");
 }
+bool Socket::send(const std::string &s){
+    int err = SSL_write(ssl, s.c_str(), s.size() );
+    if(err == -1){
+        std::cout<< "Socket send command ERROR";
+        return false;
+    }
+    return true;
+}
+std::string Socket::receive(){
+
+}
+
+
+Socket::~Socket(){
+    SSL_shutdown(ssl);
+    close(sockid);
+    SSL_CTX_free(ctx);
+    SSL_free(ssl);
+}
+
 
 //--------------------------------------------------------------
 //--------------------------------------------------------------
@@ -119,7 +148,7 @@ std::vector<std::string> menu_functions{"Boxes", "Quit", "Quit"};
 int main(int argc, char *argv[]){
     if(argc < 3){
         std::cout<< "You should use this"<<
-        " program like: ./progname login@ukr.net password\n";
+        " program like: ./pr login@ukr.net password\n";
     exit(0);
     }
 
