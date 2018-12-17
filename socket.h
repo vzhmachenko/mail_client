@@ -37,9 +37,9 @@ public:
     std::tuple<bool, std::string> create(std::string hostname, int port);
     std::tuple<bool, std::string> createSSL();
     bool send(const std::string &s);
-    std::string receive();
+    void receive();
 
-    ~Socket(){}
+    ~Socket();
 private:
     int sockid;
     SSL_CTX *ctx;
