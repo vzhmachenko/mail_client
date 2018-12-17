@@ -29,10 +29,13 @@ public:
     bool noop();
     bool logout();
     bool selectMailbox(const std::string &mailbox);
+    void userCommand();
+
 private:
     Socket socket;
     std::string username;
     std::string password;
+    std::string unic;
 
 };
 

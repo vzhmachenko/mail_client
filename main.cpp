@@ -7,6 +7,7 @@
 #include <vector>
 #include "imap.h"
 #include "socket.h"
+#include <algorithm>
 
 //add new some texxt
 
@@ -17,6 +18,7 @@
 IMAP::IMAP(const std::string &host, int port){
     std::tuple<bool, std::string> sock = 
                 socket.create(host, port);
+    unic = "unicEmailTag ";
     if(!std::get<0>(sock)) 
         std::cout<<std::get<1>(sock)<<std::endl;
 
@@ -27,16 +29,22 @@ IMAP::IMAP(const std::string &host, int port){
 
 bool IMAP::login(const std::string &username, 
                 const std::string &password){
-    std::string command = ". login " + username + " " + password +
+    std::string command = unic + "login " + username + " " + password +
     "\r\n"; 
     std::cout<<command;
 
     socket.send(command);
-    socket.receive();
-    
-
-
-
+    socket.receive(unic);
+    command = unic + "select inbox\r\n";
+    socket.send(command);
+    socket.receive(unic);
+}
+void IMAP::userCommand(){
+    std::string buf;
+    std::getline(std::cin, buf);
+    buf = unic +buf + "\r\n"; 
+    socket.send(buf);
+    socket.receive(unic);
 }
 //--------------------------------------------------------------
 //-------------SOCKET---CLASS-----------------------------------
@@ -126,15 +134,23 @@ bool Socket::send(const std::string &s){
     }
     return true;
 }
-void Socket::receive(){
+void Socket::receive(std::string& str){
     char buf[1024];
-    int err = SSL_read(ssl, buf, sizeof(buf) -1);
-    if(err < 0){
-        std::cout<<"SSL reading error\n";
-        return;
+    std::string bb;
+     while(1) {
+        int err = SSL_read(ssl, buf, sizeof(buf) -1);
+        if(err < 0){
+            std::cout<<"SSL reading error\n";
+            return;
+        }
+        buf[err] = '\0';
+        std::cout<<buf<<std::endl;
+        bb = buf;
+        if( bb.find(str) >= 0 )
+            return;
     }
-    buf[err] = '\0';
-    std::cout<<buf<<std::endl;
+/*OK, NO, BAD, PREAUTH and BYE*/
+
 
 }
 
@@ -172,15 +188,22 @@ int main(int argc, char *argv[]){
                     "VZM"};
     IMAP imap(authent.imap_server, authent.imap_port);
     char command;
-
+    std::string unic2 = "unicEmailTag ";
     while(1){   //test 
-        std::cout<<"1-login  2-...\n";
+        std::cout<<"--------------------------------\n";
+        std::cout<<"0 - manual 1-login  2-...\n";
         std::cin>>command;
-        if(command == '1'){
+
+        if(command == '0'){     //manual command;
+            std::cout<<"Manual command format: command args\n";
+            std::cin.get();
+            imap.userCommand(); 
+        }
+        else if(command == '1'){
             imap.login(argv[1], argv[2]);
-            command = '0';
-        } else if (command == '0')
-            ;
+        } else if (command == '2'){
+            Socket::receive(unic2);
+        }
         else return 0;
     }
 
