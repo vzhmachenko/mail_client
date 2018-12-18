@@ -140,8 +140,8 @@ bool Socket::send(const std::string &s){
 void Socket::receive(std::string& str){
     char buf[1024];
     std::string bb;
-     while(1) {
-        std::size_t found = -1;
+    bool endOfMessage = false;
+     while( !endOfMessage ) {
         int err = SSL_read(ssl, buf, sizeof(buf) -1);
         if(err < 0){
             std::cout<<"SSL reading error\n";
@@ -150,8 +150,11 @@ void Socket::receive(std::string& str){
         buf[err] = '\0';
         std::cout<<buf<<std::endl;
         bb = buf;
-        if( bb.find(str) >= 0 )
-            return;
+        std::size_t found = bb.find(str);
+        if( found != std::string::npos ){
+            std::cout<<"Is end;\n";
+            endOfMessage = true;
+        }
     }
 /*OK, NO, BAD, PREAUTH and BYE*/
 
