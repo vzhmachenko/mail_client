@@ -20,6 +20,14 @@ struct config{
 
 };
 
+struct Mail{
+    int uid;
+    std::string from;
+    std::string subject;
+    std::string date;
+    std::string text;
+};
+
 class IMAP{
 public:
     IMAP(const std::string &host, int port);
@@ -31,6 +39,7 @@ public:
     bool selectMailbox(const std::string &mailbox);
     void userCommand();
     void receive();
+    void list();
 
 
 private:

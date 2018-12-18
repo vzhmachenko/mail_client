@@ -3,11 +3,14 @@
 #include <cstdio>
 #include <cstring>
 #include <iostream>
+#include <cctype>    //isdigit
+
 
 #include <vector>
 #include "imap.h"
 #include "socket.h"
 #include <algorithm>
+
 
 //add new some texxt
 
@@ -49,6 +52,25 @@ void IMAP::userCommand(){
 void IMAP::receive(){
     socket.receive(unic);
 }
+void IMAP::list(){
+    std::string buf = unic + "uid search all\r\n"; 
+    socket.send(buf);
+    std::string listOfMessages = socket.receive(unic, false);
+    std::vector<int> numericList;
+    std::string::size_type i=1;
+    int digit = 0;
+    while(!isdigit(listOfMessages[++digit]) )
+        ;
+    listOfMessages.erase(0, digit-1);
+    while(isdigit(listOfMessages[i]) || isblank(listOfMessages[i])){
+        listOfMessages.erase(0, i);
+        numericList.push_back(std::stoi(listOfMessages, &i));
+    } 
+    std::cout<< "Size of vetor: " << numericList.size()<<std::endl;
+    /*for(int i=0; i< numericList.size(); i++)
+        std::cout<<numericList[i]<<" ";*/
+}
+
 //--------------------------------------------------------------
 //-------------SOCKET---CLASS-----------------------------------
 //--------------------------------------------------------------
@@ -137,25 +159,28 @@ bool Socket::send(const std::string &s){
     }
     return true;
 }
-void Socket::receive(std::string& str){
+std::string Socket::receive(std::string& str, bool show){
     char buf[1024];
-    std::string bb;
+    std::string bb = "";
     bool endOfMessage = false;
      while( !endOfMessage ) {
         int err = SSL_read(ssl, buf, sizeof(buf) -1);
         if(err < 0){
             std::cout<<"SSL reading error\n";
-            return;
+            return 0;
         }
         buf[err] = '\0';
-        std::cout<<buf<<std::endl;
-        bb = buf;
+        bb += buf;
         std::size_t found = bb.find(str);
         if( found != std::string::npos ){
-            std::cout<<"Is end;\n";
             endOfMessage = true;
         }
+
     }
+    if(show)
+        std::cout<<bb;
+    return bb;
+
 /*OK, NO, BAD, PREAUTH and BYE*/
 
 
@@ -198,7 +223,7 @@ int main(int argc, char *argv[]){
     std::string unic2 = "unicEmailTag ";
     while(1){   //test 
         std::cout<<"--------------------------------\n";
-        std::cout<<"0 - manual 1-login  2-receive\n";
+        std::cout<<"0 - manual 1-login  2-receive 3-list\n";
         std::cin>>command;
 
         if(command == '0'){     //manual command;
@@ -210,38 +235,14 @@ int main(int argc, char *argv[]){
             imap.login(argv[1], argv[2]);
         } else if (command == '2'){
             imap.receive();
+        } else if (command == '3'){
+            imap.list();
         }
         else return 0;
     }
 
 /*
-	buf[1024];
 
-	while(1){
-		p = BIO_read(bio, r_buf, 1023);
-		printf("**********************\n");
-		printf("*Message size = %d*\n", p);
-		printf("**********************\n");
-
-		if(p <= 0) 
-			break;
-		r_buf[p] = '\0';
-		printf("%s", r_buf);
-		printf("q-exit>> ");
-        std::cin.getline(w_buf, 1023);
-		if(w_buf[0] == 'q')
-			break;
-		else{
-			int len = strlen(w_buf);
-			w_buf[len + 0] = '\r';
-			w_buf[len + 1] = '\n';
-			w_buf[len + 2] = '\0';
-			p = BIO_write(bio, w_buf, strlen(w_buf));
-			printf("==============================\n");
-		}
-
-
-	}
 
 	printf("All is OK!");
 	// Close the connection and free the context

@@ -37,7 +37,7 @@ public:
     std::tuple<bool, std::string> create(std::string hostname, int port);
     std::tuple<bool, std::string> createSSL();
     bool send(const std::string &s);
-    void receive(std::string&);
+    std::string receive(std::string&, bool show = true);
 
     ~Socket();
 private:
