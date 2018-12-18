@@ -7,6 +7,9 @@
 #include <vector>
 #include "imap.h"
 #include "socket.h"
+#include <algorithm>
+
+//add new some texxt
 
 
 //--------------------------------------------------------------
@@ -15,6 +18,7 @@
 IMAP::IMAP(const std::string &host, int port){
     std::tuple<bool, std::string> sock = 
                 socket.create(host, port);
+    unic = "unicEmailTag ";
     if(!std::get<0>(sock)) 
         std::cout<<std::get<1>(sock)<<std::endl;
 
@@ -23,7 +27,28 @@ IMAP::IMAP(const std::string &host, int port){
         std::cout<<std::get<1>(ssl) << std::endl;
 }
 
+bool IMAP::login(const std::string &username, 
+                const std::string &password){
+    std::string command = unic + "login " + username + " " + password +
+    "\r\n"; 
+    std::cout<<command;
 
+    socket.send(command);
+    socket.receive(unic);
+    command = unic + "select inbox\r\n";
+    socket.send(command);
+    socket.receive(unic);
+}
+void IMAP::userCommand(){
+    std::string buf;
+    std::getline(std::cin, buf);
+    buf = unic +buf + "\r\n"; 
+    socket.send(buf);
+    socket.receive(unic);
+}
+void IMAP::receive(){
+    socket.receive(unic);
+}
 //--------------------------------------------------------------
 //-------------SOCKET---CLASS-----------------------------------
 //--------------------------------------------------------------
@@ -88,8 +113,8 @@ std::tuple<bool, std::string> Socket::createSSL(){
 
     int err = 0;
     char buf[1024];
-    char *req = "GET / HTTP/1.1\r\nHost: www.pravda.com.ua\r\n\r\n";    
-    SSL_write(ssl, req, strlen(req));
+    //char *req = "GET / HTTP/1.1\r\nHost: \r\n\r\n";    
+    //SSL_write(ssl, req, strlen(req));
     do {
         err = SSL_read(ssl, buf, sizeof(buf) - 1);
         if (err < 0) return std::make_tuple(false, "SSL_read failed.");
@@ -104,6 +129,43 @@ std::tuple<bool, std::string> Socket::createSSL(){
 
   return std::make_tuple(true, "");
 }
+bool Socket::send(const std::string &s){
+    int err = SSL_write(ssl, s.c_str(), s.size() );
+    if(err == -1){
+        std::cout<< "Socket send command ERROR";
+        return false;
+    }
+    return true;
+}
+void Socket::receive(std::string& str){
+    char buf[1024];
+    std::string bb;
+     while(1) {
+        std::size_t found = -1;
+        int err = SSL_read(ssl, buf, sizeof(buf) -1);
+        if(err < 0){
+            std::cout<<"SSL reading error\n";
+            return;
+        }
+        buf[err] = '\0';
+        std::cout<<buf<<std::endl;
+        bb = buf;
+        if( bb.find(str) >= 0 )
+            return;
+    }
+/*OK, NO, BAD, PREAUTH and BYE*/
+
+
+}
+
+
+Socket::~Socket(){
+    SSL_shutdown(ssl);
+    close(sockid);
+    SSL_CTX_free(ctx);
+    SSL_free(ssl);
+}
+
 
 //--------------------------------------------------------------
 //--------------------------------------------------------------
@@ -117,7 +179,7 @@ std::vector<std::string> menu_functions{"Boxes", "Quit", "Quit"};
 int main(int argc, char *argv[]){
     if(argc < 3){
         std::cout<< "You should use this"<<
-        " program like: ./progname login@ukr.net password\n";
+        " program like: ./pr login@ukr.net password\n";
     exit(0);
     }
 
@@ -129,64 +191,28 @@ int main(int argc, char *argv[]){
                     argv[2],
                     "VZM"};
     IMAP imap(authent.imap_server, authent.imap_port);
-    
+    char command;
+    std::string unic2 = "unicEmailTag ";
+    while(1){   //test 
+        std::cout<<"--------------------------------\n";
+        std::cout<<"0 - manual 1-login  2-receive\n";
+        std::cin>>command;
+
+        if(command == '0'){     //manual command;
+            std::cout<<"Manual command format: command args\n";
+            std::cin.get();
+            imap.userCommand(); 
+        }
+        else if(command == '1'){
+            imap.login(argv[1], argv[2]);
+        } else if (command == '2'){
+            imap.receive();
+        }
+        else return 0;
+    }
 
 /*
-	BIO *bio;
-	SSL *ssl;
-	SSL_CTX *ctx;
-    
-
-	int p;
-
-	char r_buf[1024];
-
-	// Set up the library
-	ERR_load_BIO_strings();
-
-	//SSL_library_init()  -- load encryption & hash algorithms
-	SSL_load_error_strings();	//load error strings for error reporting
-	OpenSSL_add_all_algorithms();
-	
-	// Set up the SSL context
-	//method = SSLv23_client_method()
-	ctx = SSL_CTX_new(SSLv23_client_method());
-	if(!SSL_CTX_load_verify_locations(ctx, 
-				"/etc/ssl/certs/ca-certificates.crt", NULL)){
-		fprintf(stderr, "Error loading trust store\n");
-		ERR_print_errors_fp(stderr);
-		SSL_CTX_free(ctx);
-		return 0;
-	}
-	// Setup the connection
-	bio = BIO_new_ssl_connect(ctx);
-    std::cout<<"Hello";
-	// Set the mode flag
-	BIO_get_ssl(bio, &ssl);	//error
-	SSL_set_mode(ssl, SSL_MODE_AUTO_RETRY);
-
-	// Create and setup connection
-	BIO_set_conn_hostname(bio, "imap.ukr.net:993");
-	//BIO_set_conn_hostname(bio, "gordonua.com:https");
-	if(BIO_do_connect(bio) <= 0){
-		fprintf(stderr, "Error attempting to connect\n");
-		ERR_print_errors_fp(stderr);
-		BIO_free_all(bio);
-		SSL_CTX_free(ctx);
-		return 0;
-	}
-
-	// Check the certificate
-	if(SSL_get_verify_result(ssl) != X509_V_OK){
-		fprintf(stderr, "Certificate verification error: %i\n", 
-			SSL_get_verify_result(ssl) );
-		BIO_free_all(bio);
-		SSL_CTX_free(ctx);
-		return 0;
-	}
-
-	// Read the response
-	char w_buf[1024];
+	buf[1024];
 
 	while(1){
 		p = BIO_read(bio, r_buf, 1023);

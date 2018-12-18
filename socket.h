@@ -36,11 +36,15 @@ class Socket{
 public:
     std::tuple<bool, std::string> create(std::string hostname, int port);
     std::tuple<bool, std::string> createSSL();
-    ~Socket(){}
+    bool send(const std::string &s);
+    void receive(std::string&);
+
+    ~Socket();
 private:
     int sockid;
     SSL_CTX *ctx;
     SSL *ssl;
+    //std::string unic;
 
 };
 
