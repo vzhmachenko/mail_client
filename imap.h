@@ -30,6 +30,8 @@ public:
     bool logout();
     bool selectMailbox(const std::string &mailbox);
     void userCommand();
+    void receive();
+
 
 private:
     Socket socket;

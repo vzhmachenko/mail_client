@@ -46,6 +46,9 @@ void IMAP::userCommand(){
     socket.send(buf);
     socket.receive(unic);
 }
+void IMAP::receive(){
+    socket.receive(unic);
+}
 //--------------------------------------------------------------
 //-------------SOCKET---CLASS-----------------------------------
 //--------------------------------------------------------------
@@ -138,6 +141,7 @@ void Socket::receive(std::string& str){
     char buf[1024];
     std::string bb;
      while(1) {
+        std::size_t found = -1;
         int err = SSL_read(ssl, buf, sizeof(buf) -1);
         if(err < 0){
             std::cout<<"SSL reading error\n";
@@ -191,7 +195,7 @@ int main(int argc, char *argv[]){
     std::string unic2 = "unicEmailTag ";
     while(1){   //test 
         std::cout<<"--------------------------------\n";
-        std::cout<<"0 - manual 1-login  2-...\n";
+        std::cout<<"0 - manual 1-login  2-receive\n";
         std::cin>>command;
 
         if(command == '0'){     //manual command;
@@ -202,7 +206,7 @@ int main(int argc, char *argv[]){
         else if(command == '1'){
             imap.login(argv[1], argv[2]);
         } else if (command == '2'){
-            Socket::receive(unic2);
+            imap.receive();
         }
         else return 0;
     }
