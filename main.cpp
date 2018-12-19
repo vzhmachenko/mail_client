@@ -68,15 +68,39 @@ void IMAP::list(){
         numericList.push_back(std::stoi(listOfMessages, &i));
     } 
     std::cout<< "Size of vetor: " << numericList.size()<<std::endl;
-    
+            //std::vector<int>::reverse_iterator rit = 
+            //            numericList.rbegin();
+            int rit = numericList.size()-1;
     char ch;
-    std::cout<<"Show last 10 messages: press 1\n";
+    std::cout<<"Show last 5 messages: press +\n";
     std::cin>>ch;
-    if(ch == '1'){
+    while(ch == '+' || ch == '-'){
+
         Mail mail;
-        mail.subject = Subject(numericList);
-        mail.date = Date(numericList);
-        std::cout<<mail.subject;
+        for(int i = 0; i<5; i++){
+            mail.subject = Subject(std::to_string(numericList.at(rit)));
+            mail.date = Date(std::to_string(numericList.at(rit)));
+            mail.from = From(std::to_string(numericList.at(rit)));
+            std::cout<<"\n----------msg#"<<5-abs(i)<<"------------\n";
+            std::cout<<"From: "<< mail.from;
+            std::cout<<"Date: "<< mail.date;
+            std::cout<<"Subject: "<< mail.subject;
+            if(ch == '+')
+                rit--;
+            else
+                rit++;
+        }
+        std::cout<<"********************************\n"
+                    "Print previous 5 mails press +:\n"
+                    "********************************\n";
+        std::cin>>ch;
+        while(isdigit(ch) ){
+            mail.text = Text(std::to_string(numericList.at(rit + (int)ch -48)));
+            std::cout<<":::TEXT:::\n";
+            std::cout<<mail.text;
+
+            std::cin>>ch;
+        }
 
 
 
@@ -87,21 +111,44 @@ void IMAP::list(){
 }
 /*
 uid fetch 5838 (BODY[HEADER.FIELDS (from to subject date)])
-uid fetch 5839 body[1]\r\n";  */                    
-std::string IMAP::Date(std::vector<int> &numericList){
-    std::vector<int>::reverse_iterator rit = 
-                        numericList.rbegin();
-    std::string buf = unic + "uid fetch " + std::to_string(*rit) +
-        " (BODY[HEADER.FIELDS (from to subject date)])\r\n";
-    std::string &mailHeader = buf;   
+uid fetch 5839 body[1]\r\n";  */  
+std::string IMAP::Text(std::string numMsg){    
+    std::string buf = unic + "uid fetch " + numMsg +
+        " (BODY[1])\r\n";
+    std::string &mailText = buf;   
     socket.send(buf);
-    mailHeader = socket.receive(unic, true);
-    return "KKKK";
+    mailText = socket.receive(unic, 1);
+    std::size_t begin = 0;
+    begin = mailText.find("Date:");
+    mailText = mailText.substr(begin+6, 25);
+    return mailText+"\n";
+}                  
+std::string IMAP::Date(std::string numMsg){    
+    std::string buf = unic + "uid fetch " + numMsg +
+        " (BODY[HEADER.FIELDS (date)])\r\n";
+    std::string &mailDate = buf;   
+    socket.send(buf);
+    mailDate = socket.receive(unic, false);
+    std::size_t begin = 0;
+    begin = mailDate.find("Date:");
+    mailDate = mailDate.substr(begin+6, 25);
+    return mailDate+"\n";
 }
-std::string IMAP::Subject(std::vector<int> &numericList){
-    std::vector<int>::reverse_iterator rit = 
-                        numericList.rbegin();
-    std::string buf = unic + "uid fetch " + "5839"+//std::to_string(*rit) +
+std::string IMAP::From(std::string numMsg){
+    std::string buf = unic + "uid fetch " + numMsg +
+        " (BODY[HEADER.FIELDS (from)])\r\n";
+    std::string &mailFrom = buf;   
+    socket.send(buf);
+    mailFrom = socket.receive(unic, 0);
+    std::size_t begin;
+    begin = mailFrom.find("<");
+    if(begin == std::string::npos)
+        begin = mailFrom.find("From")+6;
+    mailFrom = mailFrom.substr(begin, mailFrom.find("UID")-begin-2);
+    return mailFrom;
+}
+std::string IMAP::Subject(std::string numMsg){
+    std::string buf = unic + "uid fetch " + numMsg +
         " (BODY[HEADER.FIELDS (from to subject date)])\r\n";
     std::string &mailHeader = buf;   
     socket.send(buf);

@@ -40,8 +40,11 @@ public:
     void userCommand();
     void receive();
     void list();
-    std::string Subject(std::vector<int> &);
-    std::string Date(std::vector<int> &);
+    std::string Subject(std::string);
+    std::string Date(std::string);
+    std::string From(std::string);
+    std::string Text(std::string);    
+
 
 
 
