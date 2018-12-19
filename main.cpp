@@ -3,12 +3,13 @@
 #include <cstdio>
 #include <cstring>
 #include <iostream>
-#include <cctype>    //isdigit
+#include <cctype>    //isdigit isblank
 
 
 #include <vector>
 #include "imap.h"
 #include "socket.h"
+#include "base64.h"
 #include <algorithm>
 
 
@@ -55,7 +56,7 @@ void IMAP::receive(){
 void IMAP::list(){
     std::string buf = unic + "uid search all\r\n"; 
     socket.send(buf);
-    std::string listOfMessages = socket.receive(unic, false);
+    std::string listOfMessages = socket.receive(unic, true);
     std::vector<int> numericList;
     std::string::size_type i=1;
     int digit = 0;
@@ -67,9 +68,46 @@ void IMAP::list(){
         numericList.push_back(std::stoi(listOfMessages, &i));
     } 
     std::cout<< "Size of vetor: " << numericList.size()<<std::endl;
-    /*for(int i=0; i< numericList.size(); i++)
-        std::cout<<numericList[i]<<" ";*/
+    char ch;
+    std::cout<<"Show last 10 messages: press 1\n";
+    std::cin>>ch;
+    if(ch == '1'){
+        Mail mail;
+        std::vector<int>::reverse_iterator rit = 
+                            numericList.rbegin();
+        buf = unic + "uid fetch " + std::to_string(*rit) +
+            " (BODY[HEADER.FIELDS (from to subject date)])\r\n";
+        std::string &mailHeader = listOfMessages;   
+        socket.send(buf);
+
+        mailHeader = socket.receive(unic, false);
+        std::cout<<mailHeader;
+        std::vector<std::string> subject;
+        std::size_t begin = 0, end = 0;
+        while(1){
+            begin = mailHeader.find("=?UTF-8?B?", begin);
+            if(begin == std::string::npos)
+                break;
+            
+            end = mailHeader.find("?=", end);
+           // std::cout<<"Begin = "<< begin<<" end = "<<end;
+            subject.push_back(mailHeader.substr(begin+10, 
+                end - begin-10));
+            begin = end++;
+        }
+        for(i=0;i<subject.size(); ++i)
+            mail.subject += base64_decode(subject.at(i));
+        std::cout<<mail.subject;
+
+        
+
+
+    }
 }
+/*
+uid fetch 5838 (BODY[HEADER.FIELDS (from to subject date)])
+   id_string + " uid fetch " + std::to_string(mail.uid) + " body[1]\r\n";  */                    
+
 
 //--------------------------------------------------------------
 //-------------SOCKET---CLASS-----------------------------------
@@ -185,7 +223,6 @@ std::string Socket::receive(std::string& str, bool show){
 
 
 }
-
 
 Socket::~Socket(){
     SSL_shutdown(ssl);

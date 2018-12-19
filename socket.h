@@ -38,6 +38,8 @@ public:
     std::tuple<bool, std::string> createSSL();
     bool send(const std::string &s);
     std::string receive(std::string&, bool show = true);
+    std::string receivev(std::string& str, bool show = true);
+
 
     ~Socket();
 private:
